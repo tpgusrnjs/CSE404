@@ -131,7 +131,7 @@ if __name__ == "__main__":
         save_name, _, img_paths, mask_path = data
 
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
-        mask = (mask > 0).astype(np.float32)
+        mask = (mask > 0).astype(np.uint8) * 255
 
         img_list = []
         for p in img_paths:
@@ -154,6 +154,9 @@ if __name__ == "__main__":
         save_path = f"results/{save_name}"
         if not os.path.exists(save_path):
             os.makedirs(save_path)
+        
+        albedo_map = albedo_map / (albedo_map.max() + 1e-8)
+        shading = shading / (shading.max() + 1e-8)
 
         plt.imsave(os.path.join(save_path, "normals.png"), normal_map.astype(np.uint8))
         plt.imsave(os.path.join(save_path, "albedo.png"), albedo_map, cmap='gray')
