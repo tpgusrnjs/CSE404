@@ -1,5 +1,7 @@
 import glob
+from importlib.resources import path
 import cv2
+from matplotlib.pylab import normal
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -129,6 +131,7 @@ if __name__ == "__main__":
     assert np.allclose(np.linalg.norm(L, axis=1), 1, atol=1e-3)
     assert np.all(L[:,2] > 0)
     
+    final_images = []
     for data in dataset:
         save_name, _, img_paths, mask_path = data
 
@@ -138,7 +141,7 @@ if __name__ == "__main__":
         img_list = []
         for p in img_paths:
             img = cv2.imread(p)
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float32) / 255.0
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY).astype(np.float64) / 255.0
             img_list.append(gray)
 
         imgs = np.stack(img_list, axis=0) #(12, H, W)
@@ -158,9 +161,36 @@ if __name__ == "__main__":
             os.makedirs(save_path)
         
         normal_map = normal_map.astype(np.uint8)
-        albedo_map = albedo_map / (albedo_map.max() + 1e-8)
-        shading = shading / (shading.max() + 1e-8)
+        normal_map[mask == 0] = 0
+        normal_map = cv2.cvtColor(normal_map, cv2.COLOR_RGB2BGR)
 
-        plt.imsave(os.path.join(save_path, "normals.png"), normal_map)
-        plt.imsave(os.path.join(save_path, "albedo.png"), albedo_map, cmap='gray')
-        plt.imsave(os.path.join(save_path, "shading.png"), shading, cmap='gray')
+        
+        albedo_map = albedo_map / (albedo_map[mask > 0].max() + 1e-8)
+        albedo_map = (np.clip(albedo_map, 0.0, 1.0) * 255.0).astype(np.uint8)
+
+        shading = shading / (shading[mask > 0].max() + 1e-8)
+        shading = (np.clip(shading, 0.0, 1.0) * 255.0).astype(np.uint8)
+
+        #plt.imsave(os.path.join(save_path, "normals.png"), normal_map)
+        #plt.imsave(os.path.join(save_path, "albedo.png"), albedo_map, cmap='gray')
+        #plt.imsave(os.path.join(save_path, "shading.png"), shading, cmap='gray')
+
+        cv2.imwrite(os.path.join(save_path, "normals.png"), normal_map)
+        cv2.imwrite(os.path.join(save_path, "albedo.png"), albedo_map)
+        cv2.imwrite(os.path.join(save_path, "shading.png"), shading)
+
+        if len(albedo_map.shape) == 2:
+            albedo_map = cv2.cvtColor(albedo_map, cv2.COLOR_GRAY2BGR)
+        if len(shading.shape) == 2:
+            shading = cv2.cvtColor(shading, cv2.COLOR_GRAY2BGR)
+        cv2.putText(albedo_map, "Albedo", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        cv2.putText(normal_map, "Normal", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        cv2.putText(shading, "Shading", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        normal_map[mask == 0] = 255
+        albedo_map[mask == 0] = 255
+        shading[mask == 0] = 255
+
+        stacked = np.vstack([normal_map, albedo_map, shading])
+        final_images.append(stacked)
+    final_result = np.hstack(final_images[1:])
+    cv2.imwrite("results/final_result.png", final_result)
