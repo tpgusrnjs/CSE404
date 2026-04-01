@@ -1,4 +1,4 @@
-# pa1 : Photometric Stereo
+## pa1 : Photometric Stereo
 
 <p align="center">
   <img src="./pa1/results/buddha/albedo.png" width="25%" />
@@ -9,3 +9,6 @@
 <p align="center">
   <img src="./pa1/results/final_result.png" width="60%" />
 </p>
+
+---
+## pa2 : Structure From Motion
