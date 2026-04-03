@@ -34,11 +34,14 @@ def sift_matching(img1, img2):
 
     visualize_matches(img1, img2, kp1, kp2, good)
 
-    return kp1, kp2, good
+    pts1 = np.float32([kp1[m[0].queryIdx].pt for m in good])
+    pts2 = np.float32([kp2[m[0].trainIdx].pt for m in good])
+
+    return pts1, pts2
 
 def visualize_matches(img1, img2, kp1, kp2, good):
     sift_matches = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-    plt.imshow(sift_matches); plt.show()
+    #plt.imshow(sift_matches); plt.show()
     result_path = "result"
     if not os.path.exists(result_path):
         os.makedirs(result_path)
@@ -46,10 +49,7 @@ def visualize_matches(img1, img2, kp1, kp2, good):
 
 #########################################################
 # T2
-def essential_matrix(kp1, kp2, good, K):
-    pts1 = np.float32([kp1[m[0].queryIdx].pt for m in good])
-    pts2 = np.float32([kp2[m[0].trainIdx].pt for m in good])
-
+def essential_matrix(pts1, pts2, K):
     E, mask = cv2.findEssentialMat(pts1, pts2, K, 
                                    method=cv2.RANSAC, 
                                    prob=0.999, 
@@ -58,19 +58,20 @@ def essential_matrix(kp1, kp2, good, K):
 
 #########################################################
 # T3
-def pose_disambiguation(E, kp1, kp2, good, K):
-    pts1 = np.float32([kp1[m[0].queryIdx].pt for m in good])
-    pts2 = np.float32([kp2[m[0].trainIdx].pt for m in good])
-
-    _, R, t, mask = cv2.recoverPose(E, pts1, pts2, K)
+def pose_disambiguation(E, pts1, pts2, K):
+    _, R, t, _ = cv2.recoverPose(E, pts1, pts2, K)
     return R, t
 
 #########################################################
 # T4
+def triangulation(R, t, kp1, kp2, good, K):
+    pass
+
 def main():
     images, K = load_data(data_path, K_path)
-    kp1, kp2, good = sift_matching(images[0], images[1])
-    E, mask = essential_matrix(kp1, kp2, good, K)
+    pts1, pts2 = sift_matching(images[0], images[1])
+    E, _ = essential_matrix(pts1, pts2, K)
+    R, t = pose_disambiguation(E, pts1, pts2, K)
 
 if __name__ == "__main__":
     main()
