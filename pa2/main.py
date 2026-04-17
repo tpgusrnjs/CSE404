@@ -59,7 +59,7 @@ def essential_matrix(pts1, pts2, K):
                                    np.eye(3),
                                    method=cv2.RANSAC,
                                    prob=0.999,
-                                   threshold=0.005)
+                                   threshold=0.001)
     mask = mask.ravel().astype(bool)
     inlier_ratio = mask.sum() / len(mask)
     print(f"RANSAC inlier ratio: {mask.sum()}/{len(mask)} = {inlier_ratio:.2%}")
@@ -137,11 +137,18 @@ def reprojection_error(X, pts1, pts2, P1, P2, threshold=2.0):
 
     proj1 = project(P1, X)
     proj2 = project(P2, X)
-    error1 = np.linalg.norm(proj1 - pts1, axis=1)
-    error2 = np.linalg.norm(proj2 - pts2, axis=1)
-    valid = (error1 < threshold) & (error2 < threshold)
-    mean_err = (error1[valid].mean() + error2[valid].mean()) / 2
-    print(f"Filter: {valid.sum()}/{len(X)} points kept. Mean reprojection error: {mean_err:.3f} px")
+
+    error1_sq = np.sum((proj1 - pts1) ** 2, axis=1)
+    error2_sq = np.sum((proj2 - pts2) ** 2, axis=1)
+    epsilon = error1_sq + error2_sq
+
+    valid = epsilon < threshold
+
+    mean_err = np.sqrt(epsilon[valid]).mean() if valid.any() else np.nan
+
+    print(f"Filter: {valid.sum()}/{len(X)} points kept. "
+          f"Mean reprojection error: {mean_err:.3f} px")
+
     return X[valid], pts1[valid], pts2[valid], valid
 
 #########################################################
