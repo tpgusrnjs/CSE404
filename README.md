@@ -12,3 +12,10 @@
 
 ---
 ## pa2 : Structure From Motion
+<p align="center">
+  <img src="./pa2/result/matches.png" width="90%" />
+</p>
+
+<p align="center">
+  <img src="./pa2/result/reprojection.png" width="90%" />
+</p>
