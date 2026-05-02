@@ -420,6 +420,7 @@ def main():
     flat_accs = [flat_results[k] for k in k_list]
     spm_accs  = [spm_results[k]  for k in k_list]
 
+    # T6
     plot_spm_vs_flat(
         k_list,
         flat_accs,
