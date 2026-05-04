@@ -14,7 +14,6 @@ from itertools import product
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.svm import SVC
 from sklearn.metrics import confusion_matrix, accuracy_score
-from scipy.spatial.distance import cdist
 
 #=========================================================
 seed = 42
@@ -273,7 +272,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names, title, out_path):
 def plot_spm_vs_flat(K_values, flat_accs, spm_accs, out_path):
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.plot(K_values, flat_accs, "o-", label="Flat BoVW")
-    ax.plot(K_values, spm_accs, "s--", label="SPM")
+    ax.plot(K_values, spm_accs, "s--", label="SPM BoVW")
     ax.set_xlabel("Vocabulary size K")
     ax.set_ylabel("Top-1 Accuracy")
     ax.set_title("Flat BoVW vs SPM BoVW (χ² SVM)")
@@ -416,6 +415,11 @@ def main():
 
         if k not in spm_results or acc_chi2 > spm_results[k]:
             spm_results[k] = acc_chi2
+
+        plot_confusion_matrix(y_test, y_pred_chi2, class_names,
+                          f"χ² SVM (SPM, K={k}, C={c})",
+                          os.path.join(result_path, "confusion_matrix", f"confusion_matrix_chi2_spm_K{k}_C{c}.png"))
+        
 
     flat_accs = [flat_results[k] for k in k_list]
     spm_accs  = [spm_results[k]  for k in k_list]
