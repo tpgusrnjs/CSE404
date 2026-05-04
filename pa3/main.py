@@ -233,16 +233,16 @@ def accuracy_per_class(y_true, y_pred, n_classes):
             accs.append(float(np.mean(y_pred[mask] == c)))
     return accs
 
-def plot_accuracy_bar(per_class_linear, per_class_chi2, class_names, K, C, out_path):
+def plot_accuracy_bar(per_class_linear, per_class_chi2, class_names, label1, label2, title, out_path):
     x = np.arange(len(class_names))
     width = 0.35
     fig, ax = plt.subplots(figsize=(14, 5))
-    ax.bar(x - width / 2, per_class_linear, width, label="Linear SVM", alpha=0.8)
-    ax.bar(x + width / 2, per_class_chi2, width, label="χ² SVM", alpha=0.8)
+    ax.bar(x - width / 2, per_class_linear, width, label=label1, alpha=0.8)
+    ax.bar(x + width / 2, per_class_chi2, width, label=label2, alpha=0.8)
     ax.set_xticks(x)
     ax.set_xticklabels(class_names, rotation=45, ha="right", fontsize=8)
     ax.set_ylabel("Accuracy per class")
-    ax.set_title(f"Linear vs χ² SVM (Flat BoVW, K={K}, C={C})")
+    ax.set_title(title)
     ax.legend()
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
@@ -356,6 +356,7 @@ def main():
         print(f"Saved → {spm_path}\n")
 
     #T4
+    acc_per_cls_chi2_results = {}
     flat_results = {}
     gamma_cache = {}
 
@@ -380,11 +381,14 @@ def main():
         if k not in flat_results or acc_chi2 > flat_results[k]:
             flat_results[k] = acc_chi2
         
+        acc_per_cls_chi2 = accuracy_per_class(y_test, y_pred_chi2, n_cls)
+        acc_per_cls_chi2_results[k+c] = acc_per_cls_chi2
+
         # T6
         plot_accuracy_bar(
             accuracy_per_class(y_test, y_pred_linear, n_cls),
-            accuracy_per_class(y_test, y_pred_chi2, n_cls),
-            class_names, k, c,
+            acc_per_cls_chi2,
+            class_names, "Linear SVM", "χ² SVM", f"Linear vs χ² SVM (Flat BoVW, K={k}, C={c})",
             os.path.join(result_path, "accuracy_bar_comparison", f"accuracy_bar_comparison_K{k}_C{c}.png")
         )
 
@@ -415,6 +419,15 @@ def main():
 
         if k not in spm_results or acc_chi2 > spm_results[k]:
             spm_results[k] = acc_chi2
+
+        acc_per_cls_chi2 = acc_per_cls_chi2_results[k+c]
+
+        plot_accuracy_bar(
+            acc_per_cls_chi2,
+            accuracy_per_class(y_test, y_pred_chi2, n_cls),
+            class_names, "Flat BoVW", "SPM BoVW", f"Flat BoVW vs SPM BoVW (χ² SVM, K={k}, C={c})",
+            os.path.join(result_path, "accuracy_bar_comparison", f"accuracy_bar_comparison_chi2_K{k}_C{c}.png")
+        )
 
         plot_confusion_matrix(y_test, y_pred_chi2, class_names,
                           f"χ² SVM (SPM, K={k}, C={c})",
