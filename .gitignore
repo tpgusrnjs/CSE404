@@ -3,5 +3,7 @@ pa2/test/
 pa3/test/
 pa1/pa1_submit/
 pa2/202511013/
+pa3/202511013/
 *.pdf
 *.docx
+!report/*.pdf
